@@ -1,0 +1,121 @@
+---
+title: "Homework-10"
+author: "Anthony Yang"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center", fig.height=3, fig.width=6, warning=FALSE, message=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=100))
+
+redlining <- read.csv('redlining.csv')
+groceries <- read.csv('groceries.csv')
+
+suppressWarnings({
+  suppressPackageStartupMessages(library(ggplot2))
+  suppressPackageStartupMessages(library(tidyverse))
+  suppressPackageStartupMessages(library(moderndive))
+  suppressPackageStartupMessages(library(mosaic)) 
+  suppressPackageStartupMessages(library(effectsize))
+})
+```
+
+Link to GitHub Repository: https://github.com/anthonyangg/sds315-Homework10
+
+## Problem 1
+
+```{r echo=FALSE}
+model = lm(policies~minority + fire + age + income, data=redlining)
+coef(model)
+
+get_regression_table(model)
+
+ggplot(redlining) + geom_point(aes(x=fitted(model),y=policies, alpha = 0.2))
+```
+
+#### Question
+
+The question we're trying to answer is is there an association between the number of FAIR policies and the racial/ethnic composition of a Zip Code when adjusting the proportion of fires, proportion of houses older than WWII, and the median family income.
+
+#### Approach
+
+To answer this question, we will be utilizing the lm() and get_regression_table() functions to create a model that investigates the relationship between minority composition and the policies while adjusting for the fire, age, and income variables. After creating this model, we used the get_regression_table() function to find the confidence intervals and coefficients. We fit this model and plotted a scatterplot to see this actual relationship.
+
+#### Results
+
+When looking at the graph alone, it seems that there is an association between the number of FAIR policies and minority composition of ZIP code by seeing that as the minority composition increases, the number of policies also increases. However, when looking at the confidence interval at a level of 95% confidence, there are roughly 1.410 fewer to 1.160 more policies by minority composition making this difference statistically insignificant. 
+
+#### Conclusion
+
+When observing that the confidence interval contains 0, it shows that the confidence interval is statistically insignificant which means that there isn't an association between the number of FAIR policies and minority composition of ZIP code even when adjusting the proportion of fires, proportion of houses older than WWII, and the median family income. This means the number of FAIR policies isn't dependent on race and for ZIP codes that have fewer number of policies, it cannot be blamed on racial discrimination.
+
+
+
+## Problem 2
+
+#### Part A
+
+```{r echo=FALSE}
+avg_price <- group_by(groceries, Store)
+avg_price <- mutate(avg_price, average = sum(Price)/length(Price))
+
+ggplot(avg_price) + geom_col(aes(x=Store, y=average)) + xlab("Store") +
+  ylab("Average Prices of Products ($)") + ggtitle("Average Prices of Products sold at each store") +
+  theme_classic() + coord_flip()
+```
+
+When looking at the bar graph of the average prices of products sold at each store, HEB has the highest average prices of products while Fiesta has the lowest average prices. 
+
+#### Part B
+
+```{r echo=FALSE}
+products <- group_by(groceries, Product)
+products <- mutate(products, stores = count(Store))
+
+ggplot(products) + geom_col(aes(x=Product, y=stores)) + xlab("Product") + 
+  ylab("Number of Stores") + ggtitle("Number of Stores selling each Product") +
+  theme_classic() + coord_flip()
+```
+
+The eggs and milk are the most sold product by being sold at 16 stores. The items that are sold at the least number of stores are Lucky Charms, Frosted Flakes, Tortilla Chips, and Cinnamon Toast Crunch by only being sold at 4 stores. 
+
+#### Part C
+
+```{r echo=FALSE}
+type = lm(Price ~ Product + Type, data = groceries)
+
+confint(type, level = 0.95)
+```
+
+Compared with ordinary grocery stores (like Albertsons, HEB, or Krogers), convenience stores charge somewhere between 5.45 and 6.40 dollars more for the same product.
+
+#### Part D
+
+```{r echo=FALSE}
+store = lm(Price ~ Product + Store, data = groceries)
+
+confint(store, level=0)
+```
+
+Walmart and Kroger Fresh Fare are the two stores that seem to charge the lowest prices when comparing the same product while Whole Foods and Wheatsville Food Co-op are the two stores that seem to charge the highest prices when comparing the same product. 
+
+#### Part E
+
+```{r echo=FALSE}
+coef(store)
+```
+
+The coefficients for Central Market and HEB are -0.573 and -0.646 respectively. By comparing these two coefficients, Central Market charges more than HEB for the same product by charging 7 cents more. However, when comparing the difference between Kroger and Kroger Fresh Fare - 20 cents - making the difference between Central Market and HEB seem much smaller. 
+
+#### Part F
+
+```{r echo=FALSE}
+income10k <- mutate(groceries, Income10K = floor(Income/10000)*10000)
+
+income <- lm(Price ~ Product + Income10K, data = income10k)
+coef(income)
+
+standardize_parameters(income)
+```
+
+Based on the sign of the Income10K coefficient, people living in poorer ZIP codes pay less for the same product, on average because the sign is negative. A one-standard deviation increase in the income of a ZIP code seems to be associated with a 1.08 standard-deviation change in the price thatconsumers in that ZIP code expect to pay for the same product.
